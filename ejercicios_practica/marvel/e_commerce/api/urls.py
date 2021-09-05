@@ -22,4 +22,13 @@ urlpatterns = [
 
     # TODO: Wish-list API View
 
+    path('wish/get', GetWishListAPIView.as_view()),
+    path('wish/post', PostWishListAPIView.as_view()),
+    path('wish/get-post', ListCreateWishListAPIView.as_view()),
+    path('wish/<pk>/update', RetrieveUpdateWishListAPIView.as_view()),
+    path('wish/<pk>/delete', DestroyWishListAPIView.as_view()),
+
+    # api mixta con informaciond de los comics de la wishlist de un usuario en particular
+    path('favs/<username>/get', GetUserFavsAPIView.as_view())
+
 ]

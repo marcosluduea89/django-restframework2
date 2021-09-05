@@ -1,4 +1,5 @@
 # Primero, importamos los serializadores
+from django.http import response
 from e_commerce.api.serializers import *
 
 # Segundo, importamos los modelos:
@@ -60,8 +61,6 @@ class GetComicAPIView(ListAPIView):
     serializer_class = ComicSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-
-
 class PostComicAPIView(CreateAPIView):
     __doc__ = f'''{mensaje_headder}
     `[METODO POST]`
@@ -90,7 +89,6 @@ class RetrieveUpdateComicAPIView(RetrieveUpdateAPIView):
     queryset = Comic.objects.all()
     serializer_class = ComicSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
-
 
 class DestroyComicAPIView(DestroyAPIView):
     __doc__ = f'''{mensaje_headder}
@@ -189,4 +187,102 @@ class LoginUserAPIView(APIView):
             return Response(user_data)
 
 # TODO: Agregar las vistas genericas que permitan realizar un CRUD del modelo de wish-list.
-# TODO: Crear una vista generica modificada para traer todos los comics que tiene un usuario.
+
+class GetWishListAPIView(ListAPIView):
+    __doc__ = f'''{mensaje_headder}
+     `[METODO GET]`
+     Esta vista de API nos devuelve una lista de todos los Wishlists presentes 
+     en la base de datos.
+     '''
+    queryset = WishList.objects.all()
+    serializer_class = WishListSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser] 
+
+class PostWishListAPIView(CreateAPIView):
+    __doc__ = f'''{mensaje_headder}
+     `[METODO GET]`
+     Esta vista de API permite insertar en la base de datos.
+     '''
+    queryset = WishList.objects.all()
+    serializer_class = WishListSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser] 
+
+class ListCreateWishListAPIView(ListCreateAPIView):
+    __doc__ = f'''{mensaje_headder}
+     `[METODO GET]`
+     Esta vista de API permite ver una lista de comic y insertar en la base de datos.
+     '''
+    queryset = WishList.objects.all()
+    serializer_class = WishListSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser] 
+
+class RetrieveUpdateWishListAPIView(RetrieveUpdateAPIView):
+    __doc__ = f'''{mensaje_headder}
+     `[METODO GET]`
+     Esta vista de API permite actualizar un registro.
+     '''
+    queryset = WishList.objects.all()
+    serializer_class = WishListSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser] 
+
+class DestroyWishListAPIView(DestroyAPIView):
+    __doc__ = f'''{mensaje_headder}
+     `[METODO GET]`
+     Esta vista de API permite eliminar un registro.
+     '''
+    queryset = WishList.objects.all()
+    serializer_class = WishListSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser] 
+
+
+# TODO: Crear una vista generica modificada para traer todos los comics que tiene un usuario
+
+
+class GetUserFavsAPIView(ListAPIView):
+    __doc__ = f'''{mensaje_headder}
+    `[METODO GET]`
+    Esta vista de API mixta que nos devuelve los comics favoritos de un usuario en particular.
+    '''
+    serializer_class = WishListSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_queryset(self):
+        '''
+        Sobrescribimos la función `get_queryset` para poder filtrar el request 
+        por medio de la url. En este caso traemos de la url por medio de `self.kwargs` 
+        el parámetro `username` y con él realizamos la logica para  traer 
+        la lista de comic wishlist.  
+        '''
+        # declaramps una lista de diccionarios con la informacion de los comics 
+        json_wishlist =[] 
+        try:
+            # nos traemos el username de la url
+            username = self.kwargs['username']
+            user = User.objects.filter(username=username) # buscamos el user(de la base de datos) en base al pasado por parametro url
+            wish_list = WishList.objects.filter(user_id=user.first(), favorite=True) # nos traemos la lista de objetos wish del usuario
+            # print (wish_list)
+            #hacemos una lista con los ids de comics
+            
+            comic_ids = []
+            for comic_id in wish_list:
+                comic_ids.append(comic_id['comic_id'])
+                    
+                
+            for id_comic in comic_ids:
+                comic_obj = Comic.objects.filter(id=id_comic)
+                wishlist = {}
+                wishlist['marvel_id'] = comic_obj.marvel_id
+                wishlist['title'] = comic_obj.title
+                wishlist['description'] = comic_obj.description
+                wishlist['price'] = comic_obj.price
+                wishlist['stock_qty'] = comic_obj.stock_qty
+                wishlist['picture'] = comic_obj.picture
+                json_wishlist.append(wishlist)
+                    
+
+            return response(json_wishlist)
+
+        
+        
+        except Exception as error:
+            return {'error': f'Ha ocurrido la siguiente excepción: {error}'}
